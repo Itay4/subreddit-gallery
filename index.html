@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SubReddit Photo Gallery</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/reddit.js@0.1.4/reddit.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <style>
+	.img-inner {
+	width: 50px;
+	}
+</style
+</head>
+<body>
+<div class="container">
+</div>
+<input type="text" id="input" placeholder="Type subreddit">
+<script>
+  (function() {
+
+    var container = $(".container");
+    var input = $('#input');
+
+    input.on('input', function() {
+      container.empty();
+      var sub = $(this).val();
+      reddit.top(sub).limit(10).fetch(function(res) {
+        if (!res.data) {
+          return;
+        }
+        var imgs = res.data.children;
+        for (var i = 0; i < imgs.length; i++) {
+          var imgUrl = imgs[i].data.url;
+          container.append('<div class="img-wrapper" id="wrapper-' + i + '"></div>');
+          var wrapper = container.find('#wrapper-' + i);
+          wrapper.append('<img class="img-inner" id="inner-"' + i + ' src="' + imgUrl + '"></img>');
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>
