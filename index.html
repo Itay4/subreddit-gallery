@@ -9,7 +9,7 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 		
 		<style>
-
+		
 		input {
 		  border: 2px solid grey;
 		  text-indent: 5px;
@@ -17,7 +17,7 @@
 		  margin: 1;
 		  margin: 10px 50px;
 		}
-			
+
 		.square {
 		  float: left;
 		  position: relative;
@@ -31,31 +31,50 @@
 		  border: 6px solid;
 		  border-color: #444;
 		}
-	
+		
 		</style>
 	</head>
 
 	<body>
-		<div id="input-container">
-		  <input type="text" id="subreddit-input" placeholder="Type subreddit">
-		  <button id='app-btn'>ok</button>
-		</div>	
-		
-		<div id="imgs-container"></div>
+		<div id="app-container">
+		  <div id="input-container">
+			<input type="text" id="subreddit-input" placeholder="Type subreddit">
+			<button id='prev'>prev</button>
+			<button id='next'>next</button>
+		  </div>
+
+		  <div id="imgs-container"></div>
+		</div>
+
 		
 		<script>
+			firsts = [];
+			currPage = 0;
+			initiated = false;
+			var container = null;
+			var input = null;
+			var redditObject = null;
+
 			function getImagePosts(redditObject, n, callback) {
+			  initiated = true;
 			  var imgPosts = []
+
+			  if (currPage < firsts.length) {
+				redditObject.after(firsts[currPage]);
+			  } else if (firsts.length > 0) {
+				redditObject.after(firsts[firsts.length - 1]);
+				}
+
 			  function fetch() {
 				redditObject.fetch(function(res) {
-				  for(var post of res.data.children) {
-					if(post.data.thumbnail === "") {
+				  for (var post of res.data.children) {
+					if (post.data.thumbnail === "") {
 					  callback([])
 					  return
 					}
-					if(post.data.thumbnail_width) {
+					if (post.data.thumbnail_width) {
 					  imgPosts.push(post)
-					  if(imgPosts.length == n) {
+					  if (imgPosts.length == n) {
 						callback(imgPosts)
 						return
 					  }
@@ -68,33 +87,68 @@
 			  fetch()
 			}
 
-			(function() {
-			  var container = $("#imgs-container");
-			  var input = $('#subreddit-input');
-			  var btn = $('#app-btn');
-			  btn.on('click', function() {
-				container.empty();
+			function buildPage(imgs) {
+
+			  container.empty();
+
+			  if (currPage >= firsts.length) {
+				firsts.push(imgs[8].data.name);
+			  }
+
+			  for (var i = 0; i < imgs.length; i++) {
+
+				var imgUrl = imgs[i].data.thumbnail;
+				var title = imgs[i].data.title;
+				var link = "http://reddit.com" + imgs[i].data.permalink;
+
+				var sqrId = 'img-sqr-' + i;
+
+				container.append('<a class="square" target="_blank" href="' + link + '" title="' + title + '"  id="' + sqrId + '"></div>');
+
+				var sqr = container.find('#' + sqrId);
+
+				sqr.css('background-image', 'url("' + imgUrl + '")');
+			  }
+			  
+			  $('.square').height(contH * 0.000005);
+			  
+			}
+			$(document).ready(function() {
+			  appContainer = $("#app-container");
+			  container = $("#imgs-container");
+			  input = $('#subreddit-input');
+			  $("#prev").click(onPrev);
+			  $("#next").click(onNext);
+			  
+			  input.on('input', function() {
+
 				var sub = input.val();
 
-				var redditObject = reddit.new(sub).limit(15);
-				getImagePosts(redditObject, 9, function(imgs) {
+				redditObject = reddit.new(sub).limit(9);
 
-				  for (var i = 0; i < imgs.length; i++) {
-					var imgUrl = imgs[i].data.thumbnail;
-					var imgTitle = imgs[i].data.title;
-					var imgLink = "http://reddit.com"+imgs[i].data.permalink;
+				getImagePosts(redditObject, 9, buildPage);
 
-					var sqrId = 'img-sqr-' + i;
-
-					container.append('<a class="square" target="_blank" href="'+imgLink+'" title="'+imgTitle+'"  id="'+sqrId+'"></div>');
-
-					var sqr = container.find('#' + sqrId);
-
-					sqr.css('background-image', 'url("' + imgUrl + '")');
-				  }
-				})
 			  });
-			})();
+			});			
+			
+			function onNext() {
+			  console.log('in next');
+			  if (!initiated) {
+				return;
+			  }
+			  currPage++;
+			  getImagePosts(redditObject, 9, buildPage);
+			}
+
+			function onPrev() {
+			  console.log('in next');
+			  if (!initiated) {
+				return;
+			  }
+			  currPage--;
+			  getImagePosts(redditObject, 9, buildPage);
+			}
+
 		</script>
 	</body>
 </html>
